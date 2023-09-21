@@ -230,6 +230,21 @@ strategy:
 views: []
 ```
 
+##### Access to area ID
+
+If you want access to the area ID, you can use the value `"{{area_id}}"`. Example:
+```yaml
+strategy:
+  type: custom:mushroom-strategy
+  options:
+    areas:
+      _:
+        type: area
+        area: "{{area_id}}"
+        navigation_path: "{{area_id}}"
+```
+This example would use Home Assistant's built-in Area Card for all areas.
+
 ### Card Options
 
 The `card_options` entry enables you to specify a card type for an entity or to hide the card from the dashboard.
