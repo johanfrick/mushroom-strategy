@@ -48,17 +48,23 @@ class HomeView extends AbstractView {
       this.#createAreaCards(),
     ]).then(([chips, personCards, areaCards]) => {
       const options       = Helper.strategyOptions;
-      const homeViewCards = [
-        {
+      const homeViewCards = [];
+      if (chips.length) {
+        homeViewCards.push({
           type: "custom:mushroom-chips-card",
           alignment: "center",
           chips: chips,
-        },
-        {
+        });
+      }
+
+      if (personCards.length) {
+        homeViewCards.push({
           type: "horizontal-stack",
           cards: personCards,
-        },
-        {
+        });
+      }
+      if (!Helper.strategyOptions.hide_greeting) {
+        homeViewCards.push({
           type: "custom:mushroom-template-card",
           primary: "{% set time = now().hour %} {% if (time >= 18) %} Good Evening, {{user}}! {% elif (time >= 12) %} Good Afternoon, {{user}}! {% elif (time >= 5) %} Good Morning, {{user}}! {% else %} Hello, {{user}}! {% endif %}",
           icon: "mdi:hand-wave",
@@ -72,9 +78,8 @@ class HomeView extends AbstractView {
           hold_action: {
             action: "none",
           },
-        },
-      ];
-
+        });
+      }
       // Add quick access cards.
       if (options.quick_access_cards) {
         homeViewCards.push(...options.quick_access_cards);
@@ -85,6 +90,7 @@ class HomeView extends AbstractView {
         type: "vertical-stack",
         cards: areaCards,
       });
+
 
       // Add custom cards.
       if (options.extra_cards) {
@@ -102,49 +108,50 @@ class HomeView extends AbstractView {
    */
   async #createChips() {
     const chips       = [];
-    const chipOptions = Helper.strategyOptions.chips;
+    if (!Helper.strategyOptions.hide_chips) {
+      const chipOptions = Helper.strategyOptions.chips;
 
-    // TODO: Get domains from config.
-    const exposed_chips = ["light", "fan", "cover", "switch", "climate"];
-    // Create a list of area-ids, used for switching all devices via chips
-    const areaIds       = Helper.areas.map(area => area.area_id);
+      // TODO: Get domains from config.
+      const exposed_chips = ["light", "fan", "cover", "switch", "climate"];
+      // Create a list of area-ids, used for switching all devices via chips
+      const areaIds = Helper.areas.map(area => area.area_id);
 
-    let chipModule;
+      let chipModule;
 
-    // Weather chip.
-    const weatherEntityId = chipOptions?.weather_entity ?? Helper.entities.find(
-        entity => entity.entity_id.startsWith("weather.") && entity.disabled_by == null && entity.hidden_by == null,
-    )?.entity_id;
+      // Weather chip.
+      const weatherEntityId = chipOptions?.weather_entity ?? Helper.entities.find(
+          entity => entity.entity_id.startsWith("weather.") && entity.disabled_by == null && entity.hidden_by == null,
+      )?.entity_id;
 
-    if (weatherEntityId) {
-      try {
-        chipModule        = await import("../chips/WeatherChip");
-        const weatherChip = new chipModule.WeatherChip(weatherEntityId);
-        chips.push(weatherChip.getChip());
-      } catch (e) {
-        console.error(Helper.debug ? e : "An error occurred while creating the weather chip!");
-      }
-    }
-
-    // Numeric chips.
-    for (let chipType of exposed_chips) {
-      if (chipOptions?.[`${chipType}_count`] ?? true) {
-        const className = Helper.sanitizeClassName(chipType + "Chip");
+      if (weatherEntityId) {
         try {
-          chipModule = await import((`../chips/${className}`));
-          const chip = new chipModule[className](areaIds);
-          chips.push(chip.getChip());
+          chipModule = await import("../chips/WeatherChip");
+          const weatherChip = new chipModule.WeatherChip(weatherEntityId);
+          chips.push(weatherChip.getChip());
         } catch (e) {
-          console.error(Helper.debug ? e : `An error occurred while creating the ${chipType} chip!`);
+          console.error(Helper.debug ? e : "An error occurred while creating the weather chip!");
         }
       }
-    }
 
-    // Extra chips.
-    if (chipOptions?.extra_chips) {
-      chips.push(...chipOptions.extra_chips);
-    }
+      // Numeric chips.
+      for (let chipType of exposed_chips) {
+        if (chipOptions?.[`${chipType}_count`] ?? true) {
+          const className = Helper.sanitizeClassName(chipType + "Chip");
+          try {
+            chipModule = await import((`../chips/${className}`));
+            const chip = new chipModule[className](areaIds);
+            chips.push(chip.getChip());
+          } catch (e) {
+            console.error(Helper.debug ? e : `An error occurred while creating the ${chipType} chip!`);
+          }
+        }
+      }
 
+      // Extra chips.
+      if (chipOptions?.extra_chips) {
+        chips.push(...chipOptions.extra_chips);
+      }
+    }
     return chips;
   }
 
@@ -155,17 +162,19 @@ class HomeView extends AbstractView {
    */
   #createPersonCards() {
     const cards = [];
+    if (!Helper.strategyOptions.hide_persons) {
 
-    import("../cards/PersonCard").then(personModule => {
-      for (const person of Helper.entities.filter(entity => {
-        return entity.entity_id.startsWith("person.")
-            && entity.hidden_by == null
-            && entity.disabled_by == null;
-      })) {
-        cards.push(new personModule.PersonCard(person).getCard());
-      }
-    });
 
+      import("../cards/PersonCard").then(personModule => {
+        for (const person of Helper.entities.filter(entity => {
+          return entity.entity_id.startsWith("person.")
+              && entity.hidden_by == null
+              && entity.disabled_by == null;
+        })) {
+          cards.push(new personModule.PersonCard(person).getCard());
+        }
+      });
+    }
     return cards;
   }
 
@@ -223,10 +232,11 @@ class HomeView extends AbstractView {
 
       // Horizontally group every two area cards if all cards are created.
       if (i === Helper.areas.length - 1) {
-        for (let i = 0; i < areaCards.length; i += 2) {
+        const itemsPerRow = Helper.narrow ? 2 : 4;
+      for (let i = 0; i < areaCards.length; i += itemsPerRow) {
           groupedCards.push({
-            type: "horizontal-stack",
-            cards: areaCards.slice(i, i + 2),
+          type: "horizontal-stack",
+          cards: areaCards.slice(i, i + itemsPerRow),
           });
         }
       }

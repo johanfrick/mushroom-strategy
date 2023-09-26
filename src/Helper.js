@@ -57,6 +57,7 @@ class Helper {
    * @type {boolean}
    */
   static debug = optionDefaults.debug;
+  static narrow;
 
   /**
    * Class constructor.
@@ -110,6 +111,10 @@ class Helper {
     return this.debug;
   }
 
+  static get narrow() {
+    return this.narrow;
+  }
+
   /**
    * Initialize this module.
    *
@@ -119,6 +124,8 @@ class Helper {
    */
   static async initialize(info) {
     this.#hassStates = info.hass.states;
+    this.narrow = info.narrow;
+    this.resources = info.hass.resources[info.hass.selectedLanguage];
 
     try {
       // Query the registries of Home Assistant.
@@ -181,6 +188,8 @@ class Helper {
 
     // Merge the domains of the strategy options and the default domains.
     for (const domain of Object.keys(optionDefaults.domains)) {
+      const defaults = optionDefaults.domains[domain];
+      defaults.title = Helper.resources['component.' + domain + '.entity_component._.name'];
       this.#strategyOptions.domains[domain] = {
         ...optionDefaults.domains[domain],
         ...(this.#strategyOptions.domains[domain]),
