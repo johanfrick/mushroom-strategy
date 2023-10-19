@@ -48,6 +48,7 @@ class HomeView extends AbstractView {
       this.#createAreaCards(),
     ]).then(([chips, personCards, areaCards]) => {
       const options       = Helper.strategyOptions;
+
       const homeViewCards = [];
       if (chips.length) {
         homeViewCards.push({
@@ -107,50 +108,52 @@ class HomeView extends AbstractView {
    */
   async #createChips() {
     const chips       = [];
-    if (!Helper.strategyOptions.hide_chips) {
-      const chipOptions = Helper.strategyOptions.chips;
+    if (Helper.strategyOptions.hide_chips) {
+      return chips;
+    }
+    const chipOptions = Helper.strategyOptions.chips;
 
-      // TODO: Get domains from config.
-      const exposed_chips = ["light", "fan", "cover", "switch", "climate"];
-      // Create a list of area-ids, used for switching all devices via chips
-      const areaIds = Helper.areas.map(area => area.area_id);
+    // TODO: Get domains from config.
+    const exposed_chips = ["light", "fan", "cover", "switch", "climate"];
+    // Create a list of area-ids, used for switching all devices via chips
+    const areaIds       = Helper.areas.map(area => area.area_id);
 
-      let chipModule;
+    let chipModule;
 
-      // Weather chip.
-      const weatherEntityId = chipOptions?.weather_entity ?? Helper.entities.find(
-          entity => entity.entity_id.startsWith("weather.") && entity.disabled_by == null && entity.hidden_by == null,
-      )?.entity_id;
+    // Weather chip.
+    const weatherEntityId = chipOptions?.weather_entity ?? Helper.entities.find(
+        entity => entity.entity_id.startsWith("weather.") && entity.disabled_by == null && entity.hidden_by == null,
+    )?.entity_id;
 
-      if (weatherEntityId) {
-        try {
-          chipModule = await import("../chips/WeatherChip");
-          const weatherChip = new chipModule.WeatherChip(weatherEntityId);
-          chips.push(weatherChip.getChip());
-        } catch (e) {
-          console.error(Helper.debug ? e : "An error occurred while creating the weather chip!");
-        }
-      }
-
-      // Numeric chips.
-      for (let chipType of exposed_chips) {
-        if (chipOptions?.[`${chipType}_count`] ?? true) {
-          const className = Helper.sanitizeClassName(chipType + "Chip");
-          try {
-            chipModule = await import((`../chips/${className}`));
-            const chip = new chipModule[className](areaIds);
-            chips.push(chip.getChip());
-          } catch (e) {
-            console.error(Helper.debug ? e : `An error occurred while creating the ${chipType} chip!`);
-          }
-        }
-      }
-
-      // Extra chips.
-      if (chipOptions?.extra_chips) {
-        chips.push(...chipOptions.extra_chips);
+    if (weatherEntityId) {
+      try {
+        chipModule        = await import("../chips/WeatherChip");
+        const weatherChip = new chipModule.WeatherChip(weatherEntityId);
+        chips.push(weatherChip.getChip());
+      } catch (e) {
+        console.error(Helper.debug ? e : "An error occurred while creating the weather chip!");
       }
     }
+
+    // Numeric chips.
+    for (let chipType of exposed_chips) {
+      if (chipOptions?.[`${chipType}_count`] ?? true) {
+        const className = Helper.sanitizeClassName(chipType + "Chip");
+        try {
+          chipModule = await import((`../chips/${className}`));
+          const chip = new chipModule[className](areaIds);
+          chips.push(chip.getChip());
+        } catch (e) {
+          console.error(Helper.debug ? e : `An error occurred while creating the ${chipType} chip!`);
+        }
+      }
+    }
+
+    // Extra chips.
+    if (chipOptions?.extra_chips) {
+      chips.push(...chipOptions.extra_chips);
+    }
+
     return chips;
   }
 
@@ -161,19 +164,20 @@ class HomeView extends AbstractView {
    */
   #createPersonCards() {
     const cards = [];
-    if (!Helper.strategyOptions.hide_persons) {
-
-
-      import("../cards/PersonCard").then(personModule => {
-        for (const person of Helper.entities.filter(entity => {
-          return entity.entity_id.startsWith("person.")
-              && entity.hidden_by == null
-              && entity.disabled_by == null;
-        })) {
-          cards.push(new personModule.PersonCard(person).getCard());
-        }
-      });
+    if (Helper.strategyOptions.hide_persons) {
+      return cards;
     }
+
+    import("../cards/PersonCard").then(personModule => {
+      for (const person of Helper.entities.filter(entity => {
+        return entity.entity_id.startsWith("person.")
+            && entity.hidden_by == null
+            && entity.disabled_by == null;
+      })) {
+        cards.push(new personModule.PersonCard(person).getCard());
+      }
+    });
+
     return cards;
   }
 
