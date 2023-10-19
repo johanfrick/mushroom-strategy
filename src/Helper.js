@@ -189,7 +189,9 @@ class Helper {
     // Merge the domains of the strategy options and the default domains.
     for (const domain of Object.keys(optionDefaults.domains)) {
       const defaults = optionDefaults.domains[domain];
-      defaults.title = this.resources['component.' + domain + '.entity_component._.name'];
+      if (this.resources) {
+        defaults.title = this.resources['component.' + domain + '.entity_component._.name'];
+      }
       this.#strategyOptions.domains[domain] = {
         ...optionDefaults.domains[domain],
         ...(this.#strategyOptions.domains[domain]),

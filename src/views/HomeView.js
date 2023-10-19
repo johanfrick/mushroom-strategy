@@ -195,7 +195,7 @@ class HomeView extends AbstractView {
     const groupedCards = [
       {
         type: "custom:mushroom-title-card",
-        title: "Areas",
+        title: Helper.resources?.["ui.dialogs.quick-bar.commands.navigation.areas"] ?? "Areas",
       },
     ];
     let areaCards      = [];
