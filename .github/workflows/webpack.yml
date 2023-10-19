@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
     # Ignore changes in folders that are affected by the auto commit. (Node.js project)
-    paths-ignore: 
+    paths-ignore:
       - 'dist/**'
   # pull_request:
   #  branches: [ "main" ]
@@ -23,9 +23,7 @@ jobs:
     # Checkout Repository
     steps:
     - uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}    
-
+      
     # Build steps
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
@@ -34,7 +32,7 @@ jobs:
 
     - name: Node Install
       run: npm ci
-      
+
     - name: Build Distribution
       run: |
         npm run build
@@ -44,7 +42,7 @@ jobs:
       run: |
         git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
 
-    # Commit and push all changed files. 
+    # Commit and push all changed files.
     # Must only affect files that are listed in "paths-ignore".
     - name: GIT Commit Distribution Build
       # Only run on main branch push (e.g. pull request merge).

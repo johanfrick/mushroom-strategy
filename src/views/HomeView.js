@@ -91,7 +91,6 @@ class HomeView extends AbstractView {
         cards: areaCards,
       });
 
-
       // Add custom cards.
       if (options.extra_cards) {
         homeViewCards.push(...options.extra_cards);
